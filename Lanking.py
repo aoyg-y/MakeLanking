@@ -2,10 +2,11 @@ from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.common.by import By
 from bs4 import BeautifulSoup
-from dotev import load_dotenv
+from dotenv import load_dotenv
 import re
 import pandas as pd
 import os 
+import time
 import gspread
 from gspread_dataframe import set_with_dataframe
 from oauth2client.service_account import ServiceAccountCredentials
@@ -17,7 +18,11 @@ load_dotenv()
 class MakeLanking():
     def __init__(self):
         self.email = os.getenv("EMAIL")
-        self.password = os.getenv("398yuaoyg")
+        self.password = os.getenv("PASSWORD")
+        self.json_key = os.getenv("JSONKEY")
+        #print(self.password)
+        #print(self.email)
+        #print(self.json_key)
         #男子1,女子2
         #各種目の陸マガのランキングのページのurlを指定するのに必要
         self.eid_dict = {1:{"100":10110,
@@ -88,7 +93,7 @@ class MakeLanking():
 
         buttons = driver.find_elements(By.NAME,"btn_type")
         buttons[1].click()
-        driver.implicitly_wait(2)
+        time.sleep(2)
 
 
         #htmlを取得してbeautifulsoupで解析
@@ -116,6 +121,7 @@ class MakeLanking():
             
         return(pd.DataFrame(results_list,columns=columns))
     
+    #使っていない
     def make_csv(self,year,sex,eid,filename):
         #cd直下にfilenameと一致するディレクトリを作っておく必要あり
         url =  f'https://rikumaga.com/records/ranking?pref_id_list=&area_id_list=&year%5Byear%5D={year}&y=nendo&room=1&bg=2&g=3&peid=&eid[]={self.eid_dict[sex][eid]}&g={sex}&rr=1000'
@@ -179,7 +185,7 @@ class MakeLanking():
         # 認証情報の設定
         scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
         dir_path = os.path.dirname(os.path.abspath('__file__'))
-        creds = ServiceAccountCredentials.from_json_keyfile_name(os.path.join(dir_path,"makelanking-c166bf95298d.json"),scope)
+        creds = ServiceAccountCredentials.from_json_keyfile_name(os.path.join(dir_path,self.json_key),scope)
 
         # クライアントの作成
         gs = gspread.authorize(creds)
@@ -189,10 +195,12 @@ class MakeLanking():
         if ss_name in ss_names:
             wb = gs.open(ss_name)
             # すべてのワークシートを削除（再作成準備）
-            for sheet in wb.worksheets():
-                if len(wb.worksheets()) > 1:
-                    wb.del_worksheet(sheet)
-            # 空の初期ワークシート（sheet1）が自動的に作られるので、そのまま使う
+            sheets = wb.worksheets()
+            for sheet in sheets[1:]:
+                wb.del_worksheet(sheet)
+            ws = wb.sheet1
+            ws.update_title("summery")
+            ws.clear()
         else:
             wb = gs.create(str(ss_name), "1P6RvGgPk-6pTPsTH1aW91X7UxSvj0jWh")
         
@@ -200,25 +208,31 @@ class MakeLanking():
                 
         sheet_num = 1
         
-        for sex in [1,2]:
+        for sex in eids.keys():
             point_df = pd.DataFrame()
             try:
                 for eid in eids[sex]:
+                    sheet_name = f"{'男子' if sex==1 else '女子'}{eid}"
+
                     url =  f'https://rikumaga.com/records/ranking?pref_id_list=&area_id_list=&year%5Byear%5D={year}&y=nendo&room=1&bg=2&g=3&peid=&eid[]={self.eid_dict[sex][eid]}&g={sex}&rr=1000'
                     df = self.make_result_df(url)
                     df = df[df["大学"].isin(univs[sex])]
                     df.reset_index(inplace=True,drop=True)
                     df.index = df.index + 1
-
+                    print(sheet_name,len(df),"人")
                     #得点計算
                     eid_point_df = df[df.index<=8]#順位は場合による
                     eid_point_df["得点"] = 9 - eid_point_df.index
                     point_df = pd.concat([point_df,eid_point_df])
 
-                    wb.add_worksheet(f"{'男子' if sex==1 else '女子'}{eid}", rows=500, cols=10)
-                    ws = wb.get_worksheet(sheet_num)
-                    ws.append_rows(df.reset_index().values.tolist())
-                    sheet_num += 1
+                    # 既存シート確認
+                    try:
+                        old_ws = wb.worksheet(sheet_name)
+                        wb.del_worksheet(old_ws)
+                    except gspread.exceptions.WorksheetNotFound:
+                        pass
+                    ws = wb.add_worksheet(sheet_name, rows=500, cols=10)
+                    set_with_dataframe(ws,df,include_index=True)
 
             #女子がない時
             except KeyError:
@@ -233,4 +247,4 @@ class MakeLanking():
 
 
 ML=MakeLanking()
-ML.make_lanking_spreadsheet(3,2024,"七大戦2024SB")
+ML.make_lanking_spreadsheet(1,2025,"2026京都インカレ")
