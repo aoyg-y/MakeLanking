@@ -22,6 +22,7 @@
 ## 必要環境
 - Python 3.10+
 - Google Sercvice Account
+
 \\windows環境では今のところうまくいっていますが、WSL2ではまだ確認できてない
 
 ---
