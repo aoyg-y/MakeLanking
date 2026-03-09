@@ -12,7 +12,7 @@
 
 対象とする対校戦を指定可能
 1. 京都インカレ
-2.関西インカレ
+2. 関西インカレ
 3. 七大戦
 4. 同志社戦
 5. 東大戦
@@ -22,6 +22,7 @@
 ## 必要環境
 - Python 3.10+
 - Google Sercvice Account
+\\windows環境では今のところうまくいっていますが、WSL2ではまだ確認できてない
 
 ---
 
@@ -45,11 +46,11 @@ pip install -r requirements.txt
 
 ## 環境変数設定
 
-google APIのcredential jsonをディレクトリに配置
+google APIのcredential jsonをディレクトリに配置\\
 以下が参考
 https://note.com/kohaku935/n/nf69f13012eb8
 
-.envを作成
+.envを作成\\
 json keyと陸マガのアカウントを記入
 ```
 EMAIL = xxxx
