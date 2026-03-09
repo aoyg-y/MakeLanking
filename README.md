@@ -11,11 +11,11 @@
 - gspreadでgoogle spreadsheeetに出力
 
 対象とする対校戦を指定可能
-- [1] 京都インカレ
-- [2] 関西インカレ
-- [3] 七大戦
-- [4] 同志社戦
-- [5] 東大戦
+1. 京都インカレ
+2.関西インカレ
+3. 七大戦
+4. 同志社戦
+5. 東大戦
 
 ---
 
@@ -26,7 +26,8 @@
 ---
 
 ## インストール
-'''bash
+```bash
+
 # レポジトリをclone
 git clone https://github.com/aoyg-y/MakeLanking.git
 
@@ -38,7 +39,7 @@ source venv/bin/activate  # Windows: venv\Scripts\activate
 
 # ライブラリのインストール
 pip install -r requirements.txt
-'''
+```
 
 ---
 
@@ -50,20 +51,20 @@ https://note.com/kohaku935/n/nf69f13012eb8
 
 .envを作成
 json keyと陸マガのアカウントを記入
-'''
+```
 EMAIL = xxxx
 PASSWORD = xxxx
 JSONKEY = xxxx
-'''
+```
 
 ---
 
 ## 使い方
 
-'''python
+```python
 ML = MakeLanking()
 ML.make_lanking_spreadsheet(3,2024,"七大戦2024SB")
-'''
+```
 
 |引数|意味|
 |-|-|
